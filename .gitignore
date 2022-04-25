@@ -1,0 +1,4 @@
+env/
+strip_env/
+.env
+venv
