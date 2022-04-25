@@ -11,7 +11,6 @@ class CheckOutSessionView(View):
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
-                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
                     'price': '{{PRICE_ID}}',
                     'quantity': 1,
                 },

@@ -1,6 +1,6 @@
 <form action="" method="POST">
   {% csrf_token %}
-  <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="{{ key }}"
+  <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="pk_test_51KsLOmSFU0opvI2Tqn9AhGGmqD7DQrY89mlXu5LWROl8s6LBgncAEQbyIvIUiaXdwZ2v3Cu4I23TJW0v69TZb9QC000GEtwsb4"
       data-currency="inr" data-amount="{{price}}" data-name="Buy product"
       data-description="{{p.product_name}} {{p.category}}" data-email="{{user.email}}" data-locale="auto">
   </script>
