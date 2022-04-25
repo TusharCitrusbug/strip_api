@@ -1,0 +1,7 @@
+<form action="" method="POST">
+  {% csrf_token %}
+  <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="{{ key }}"
+      data-currency="inr" data-amount="{{price}}" data-name="Buy product"
+      data-description="{{p.product_name}} {{p.category}}" data-email="{{user.email}}" data-locale="auto">
+  </script>
+</form>
