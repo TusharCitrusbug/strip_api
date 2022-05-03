@@ -20,9 +20,10 @@ class Customer(models.Model):
     stripe_subscription_id = models.CharField(max_length=255,null=True,blank=True)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE,null=True,blank=True)
     payment_method = models.CharField(max_length=200)
-    wallet_balance=models.PositiveBigIntegerField(null=True,blank=True)
     buy_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(auto_now_add=True)
+    description=models.TextField(null=True,blank=True)
+    address=models.TextField(null=True,blank=True)
     has_active_plan = models.BooleanField(default=False)
 
     def __str__(self):

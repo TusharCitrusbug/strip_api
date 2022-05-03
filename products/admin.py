@@ -27,9 +27,10 @@ class CustomerAdmin(admin.ModelAdmin):
         'stripe_subscription_id',
         'plan',
         'payment_method',
-        'wallet_balance',
         'buy_at',
         'deadline',
+        'description',
+        'address',
         'has_active_plan',
     )
     list_filter = (

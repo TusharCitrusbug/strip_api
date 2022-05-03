@@ -14,12 +14,13 @@ from django.contrib.auth.models import User
 import jwt
 import datetime
 from rest_framework.response import Response
+from datetime import timedelta
+from django.contrib.auth.hashers import make_password,check_password
 
 def jwt_authentication(request):
     try:
         jwt_token = request.META.get('HTTP_AUTHORIZATION')
         payload=jwt.decode(jwt_token,'secrate',algorithms=['HS256'])
-        print("3945849805389534890",payload)
         return payload
     except:
         return None
@@ -30,26 +31,37 @@ class CustomerApiView(ListAPIView):
     serializer_class= CustomerSerializer
     @csrf_exempt
     def post(self, request):
-        exist_customer=Customer.objects.filter(customer__email=request.POST.get('email'))
-        if not exist_customer.exists():
-            customer=stripe.Customer.create(email=request.POST.get('email'),name=request.POST.get('name'))
-            stripe_source = stripe.Customer.create_source(customer.stripe_id, source="tok_in")
-            Customer.objects.create(customer=User.objects.create(email=request.POST.get('email'),username=request.POST.get('username')),stripe_id=customer.id,payment_method=stripe_source.id)
-            return JsonResponse({"customer":"created"})
-        else:
-            return JsonResponse({"customer":"exists"})
+        try:
+            password = request.POST.get('password')
+        
+            exist_customer=Customer.objects.filter(customer__email=request.POST.get('email'))
+            if not exist_customer.exists():
+                customer=stripe.Customer.create(email=request.POST.get('email'),name=request.POST.get('name'),address={
+                    "line1": request.POST.get('address'),
+        "postal_code": request.POST.get('address'),
+        "city": request.POST.get('address'),
+        "state": request.POST.get('address'),
+        "country": "US",
+                })
+                stripe_source = stripe.Customer.create_source(customer.stripe_id, source="tok_in")
+                Customer.objects.create(customer=User.objects.create(email=request.POST.get('email'),username=request.POST.get('username'),password=make_password(password)),stripe_id=customer.id,payment_method=stripe_source.id,address=request.POST.get('address'))
+                return JsonResponse({"customer":"created"})
+            else:
+                return JsonResponse({"customer":"exists"})
+        except:
+            return Response("pasword should not be null please enter a password to register")
                        
 class PlanApiView(ListAPIView):
     queryset =Plan.objects.all()
     serializer_class= PlanSerializer
     @csrf_exempt
     def post(self, request):
-        exist_plan=Plan.objects.filter(Name=request.POST.get('Name'))
+        exist_plan=Plan.objects.filter(Name=request.POST.get('plan'))
         if not exist_plan.exists():
-            plan=stripe.Product.create(name=request.POST.get('Name'),description=request.POST.get('description'),images=request.POST.get('images'))
-            price=stripe.Price.create(
-  unit_amount=request.POST.get('price'),
-  currency="usd",
+            plan=stripe.Product.create(name=request.POST.get('plan'),description=request.POST.get('description'),images=request.POST.get('images'))
+            price=stripe.Price.create(active=True,
+  unit_amount=int(request.POST.get('price')),
+  currency="inr",
   recurring={"interval": "month"},
   product=plan.id,
 )
@@ -67,20 +79,23 @@ class CustomerLogin(APIView):
     @csrf_exempt
     def post(self, request):
         try:
+            password=request.POST.get('password')
             customer=Customer.objects.get(customer__email=request.POST.get('email'))
-            print(customer.id,"************************")
-            payload={
-                    'id':customer.id,
-                    "exp":datetime.datetime.utcnow() + datetime.timedelta(minutes=20),
-                    'iat': datetime.datetime.utcnow(),
+            if check_password(password,customer.customer.password):
+                payload={
+                        'id':customer.id,
+                        "exp":datetime.datetime.utcnow() + datetime.timedelta(minutes=20),
+                        'iat': datetime.datetime.utcnow(),
+                    }
+                token=jwt.encode(payload,'secrate',algorithm='HS256')
+                response = Response()
+                response.set_cookie(key='jwt',value=token)
+                response.data ={
+                        'jwt':token
                 }
-            token=jwt.encode(payload,'secrate',algorithm='HS256')
-            response = Response()
-            response.set_cookie(key='jwt',value=token)
-            response.data ={
-                    'jwt':token
-            }
-            return response
+                return response
+            else:
+                return Response("Password incorrect  please try again")
         except:
             return JsonResponse({'customer':'does not exists login again'})
 
@@ -96,22 +111,18 @@ class PlanPurchaseView(ListAPIView):
             try:
                 if customer.plan != None or customer.has_active_plan == True:
                     return Response("You are already subscriber for a plan")
-                if customer.wallet_balance ==0:
-                    return Response("You have insufficient balance please top-up your wallet")
                 plan = Plan.objects.get(Name=request.data["plan"])
-                if float(request.data["price"]) != plan.Price:
-                    return Response("You have entered wrong amount for the plan please enter again the actual price")
-
-                print("&*&*&*&*&**")
+                stripe_source = stripe.Customer.create_source(customer.stripe_id, source="tok_in")
+                customer.payment_method=stripe_source.id
                 stripe_subscription = stripe.Subscription.create(customer=customer.stripe_id, default_source=customer.payment_method, items=[{"price":plan.stripe_price_id}])
                 customer.stripe_subscription_id=stripe_subscription.id
                 customer.plan=plan
                 customer.has_active_plan =True
+                
                 customer.save()
             except:
                 return Response("Product the you've selected doesnot exists")
             invoice = stripe.Invoice.retrieve(stripe_subscription.latest_invoice)
             payment_intent = stripe.PaymentIntent.retrieve(invoice.payment_intent)
-            print(payment_intent,"******************************")
             return Response(f"Subscription purchased successfully.......😍🤑 varify your payment through below link: {payment_intent.next_action.use_stripe_sdk.stripe_js}")
 
