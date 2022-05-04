@@ -22,7 +22,7 @@ class Customer(models.Model):
     payment_method = models.CharField(max_length=200)
     buy_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(auto_now_add=True)
-    description=models.TextField(null=True,blank=True)
+    # description=models.TextField(null=True,blank=True)
     address=models.TextField(null=True,blank=True)
     has_active_plan = models.BooleanField(default=False)
 

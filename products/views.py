@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+import webbrowser
 import stripe
 from django.shortcuts import render,redirect
 from django.views import View
@@ -16,6 +17,7 @@ import datetime
 from rest_framework.response import Response
 from datetime import timedelta
 from django.contrib.auth.hashers import make_password,check_password
+
 
 def jwt_authentication(request):
     try:
@@ -43,8 +45,8 @@ class CustomerApiView(ListAPIView):
         "state": request.POST.get('address'),
         "country": "US",
                 })
-                stripe_source = stripe.Customer.create_source(customer.stripe_id, source="tok_in")
-                Customer.objects.create(customer=User.objects.create(email=request.POST.get('email'),username=request.POST.get('username'),password=make_password(password)),stripe_id=customer.id,payment_method=stripe_source.id,address=request.POST.get('address'))
+                # stripe_source = stripe.Customer.create_source(customer.stripe_id, source="tok_in")
+                Customer.objects.create(customer=User.objects.create(email=request.POST.get('email'),username=request.POST.get('username'),password=make_password(password)),stripe_id=customer.id,address=request.POST.get('address'))
                 return JsonResponse({"customer":"created"})
             else:
                 return JsonResponse({"customer":"exists"})
@@ -60,21 +62,17 @@ class PlanApiView(ListAPIView):
         if not exist_plan.exists():
             plan=stripe.Product.create(name=request.POST.get('plan'),description=request.POST.get('description'),images=request.POST.get('images'))
             price=stripe.Price.create(active=True,
-  unit_amount=int(request.POST.get('price')),
+  unit_amount=int(request.POST.get('price'))*100,
   currency="inr",
   recurring={"interval": "month"},
   product=plan.id,
 )
-
             Plan.objects.create(Name=plan.name,plan_id=plan.id,Price=price.unit_amount,Description=request.POST.get('description'),Image=request.POST.get('images'),stripe_price_id=price.id)
             return JsonResponse({"Plan":"created"})
         else:
             return JsonResponse({"Plan":"exists"})
     pass
 
-class PurchasePlan(ListAPIView):
-    # plan=stripe.Plan.retrieve()
-    pass
 class CustomerLogin(APIView):
     @csrf_exempt
     def post(self, request):
@@ -124,5 +122,7 @@ class PlanPurchaseView(ListAPIView):
                 return Response("Product the you've selected doesnot exists")
             invoice = stripe.Invoice.retrieve(stripe_subscription.latest_invoice)
             payment_intent = stripe.PaymentIntent.retrieve(invoice.payment_intent)
-            return Response(f"Subscription purchased successfully.......😍🤑 varify your payment through below link: {payment_intent.next_action.use_stripe_sdk.stripe_js}")
+            url = payment_intent.next_action.use_stripe_sdk.stripe_js
+            webbrowser.open(url, new=0, autoraise=True)
+            return Response(f"Subscription purchased successfully.......😍🤑 please check your browser to authenticate if not opened then please hit this url {url}")
 

@@ -29,7 +29,6 @@ class CustomerAdmin(admin.ModelAdmin):
         'payment_method',
         'buy_at',
         'deadline',
-        'description',
         'address',
         'has_active_plan',
     )

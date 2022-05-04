@@ -11,5 +11,5 @@ urlpatterns = [
     path('purchase-plan/', PlanPurchaseView.as_view(),name='PlanPurchaseView'),
     path('login/', CustomerLogin.as_view(),name='CustomerLogin'),
     path('purchase-plan/', PlanPurchaseView.as_view(),name='PlanPurchaseView'),
-
+    
 ]
