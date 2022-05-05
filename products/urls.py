@@ -11,5 +11,10 @@ urlpatterns = [
     path('purchase-plan/', PlanPurchaseView.as_view(),name='PlanPurchaseView'),
     path('login/', CustomerLogin.as_view(),name='CustomerLogin'),
     path('purchase-plan/', PlanPurchaseView.as_view(),name='PlanPurchaseView'),
+    path('api/facebook-login/', FacebookLoginView.as_view(),name='FacebookLoginView'),
+    path('auth/google/', GoogleLogin.as_view(), name='google_login'),
+   
+
     
 ]
+

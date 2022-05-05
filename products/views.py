@@ -17,8 +17,11 @@ import datetime
 from rest_framework.response import Response
 from datetime import timedelta
 from django.contrib.auth.hashers import make_password,check_password
-
-
+import requests
+from rest_auth.registration.serializers import SocialLoginSerializer
+from rest_auth.registration.views import SocialLoginView
+from .adapters import GoogleOAuth2AdapterIdToken
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 def jwt_authentication(request):
     try:
         jwt_token = request.META.get('HTTP_AUTHORIZATION')
@@ -126,3 +129,25 @@ class PlanPurchaseView(ListAPIView):
             webbrowser.open(url, new=0, autoraise=True)
             return Response(f"Subscription purchased successfully.......😍🤑 please check your browser to authenticate if not opened then please hit this url {url}")
 
+
+class FacebookLoginView(ListAPIView):
+    @csrf_exempt
+    def post(self, request):
+        token = request.data['token']
+        req1 = requests.get(f"https://graph.facebook.com/v13.0/me?fields=id%2Cname%2Cemail&access_token={token}")
+        data = req1.json()
+        return Response(data)
+    
+
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2AdapterIdToken
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
+    callback_url = "http://localhost:8000/api/v1/users/login/google/callback/"
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)

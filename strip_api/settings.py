@@ -43,12 +43,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'oauth2_provider',
-    'social_django',
-    'rest_framework_social_oauth2',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
 ]
+SITE_ID = 1
 
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 ACCOUNT_DEFAULT_HTTP_PROTOCOL='https'
 
 MIDDLEWARE = [
@@ -130,29 +132,64 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
 
 AUTHENTICATION_BACKENDS = (
 
-     # Facebook OAuth2
-    'social_core.backends.facebook.FacebookAppOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
 
     # model backend
     'django.contrib.auth.backends.ModelBackend',
 
-    # google OAuth2
-    'social_core.backends.google.GoogleOAuth2',
-
-    # django-rest-framework-social-oauth2
-    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        "APP": {
+            "client_id": SOCIAL_AUTH_GOOGLE_OAUTH2_KEY,
+            "secret": SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET,
+        },
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    },
+
+    'facebook':
+        {
+        'METHOD': 'oauth2',
+        'SDK_URL': '//connect.facebook.net/{locale}/sdk.js',
+        'SCOPE': ['email', 'public_profile'],
+        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+        'INIT_PARAMS': {'cookie': True},
+        'FIELDS': [
+            'id',
+            'first_name',
+            'last_name',
+            'name',
+            'name_format',
+            'picture',
+            'short_name'
+        ],
+        'EXCHANGE_TOKEN': True,
+        'LOCALE_FUNC': lambda request: 'ru_RU',
+        'VERIFIED_EMAIL': False,
+        'VERSION': 'v7.0',
+        # you should fill in 'APP' only if you don't create a Facebook instance at /admin/socialaccount/socialapp/
+        'APP': {
+            'client_id': SOCIAL_AUTH_FACEBOOK_KEY,
+            'secret': SOCIAL_AUTH_FACEBOOK_SECRET,
+        }
+    }
+}
 
 REST_FRAMEWORK = {
     
     'DEFAULT_AUTHENTICATION_CLASSES': (
        
         # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
+        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
+        # 'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ),
 }
 
